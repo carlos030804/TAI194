@@ -44,3 +44,12 @@ def actualizar(id:int,usuarioActualizado:dict):
             return usuarios[index]
     
     raise HTTPException(status_code=400,detail="El usuario no existe")
+
+@app.delete('/Usuarios/{id}',tags=['Operaciones CRUD'])
+def eliminar(id:int):
+    for index, usr in enumerate(usuarios):
+        if usr["id"] == id:
+            usuarios.pop(index)
+            return usuarios[index]
+    
+    raise HTTPException(status_code=400,detail="El usuario no existe")
