@@ -22,3 +22,9 @@ def home():
     """Endpoint de bienvenida a la API."""
     return {"hello": "Hello FastAPI!"}
 
+# EndPoint consulta todas las tareas
+@app.get("/tareas", tags=['Operaciones CRUD'])
+def obtener_tareas():
+    """Devuelve la lista de todas las tareas registradas."""
+    return tareas
+
