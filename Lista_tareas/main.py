@@ -28,3 +28,12 @@ def obtener_tareas():
     """Devuelve la lista de todas las tareas registradas."""
     return tareas
 
+# EndPoint para consultar una tarea por su ID
+@app.get("/tareas/{tarea_id}", tags=['Operaciones CRUD'])
+def obtener_tarea(tarea_id: int):
+    """Obtiene los detalles de una tarea específica."""
+    for tarea in tareas:
+        if tarea["id"] == tarea_id:
+            return tarea
+    raise HTTPException(status_code=404, detail="Tarea no encontrada")
+
