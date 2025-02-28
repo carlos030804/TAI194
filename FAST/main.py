@@ -1,6 +1,7 @@
 from fastapi import FastAPI, HTTPException
 from typing import Optional, List
-from models import modelUsuario
+from models import modelUsuario, modelAuth
+from gentoken import createToken
 
 app = FastAPI(
     title="Mi primer API",
@@ -8,7 +9,7 @@ app = FastAPI(
     version="1.0.1"
 )    
 usuarios=[
-	{"id":1,"nombre":"carlos", "edad":20, "correo":"122041770@upq.edu.mx"},
+	{"id":1,"nombre":"carlos", "edad":20, "correo":"carlos@example.com"},
 	{"id":2,"nombre":"Paulina", "edad":24, "correo":"122041771@upq.edu.mx"},
 	{"id":3,"nombre":"Saul", "edad":21, "correo":"122041772@upq.edu.mx"},
 	{"id":4,"nombre":"Maye", "edad":26, "correo":"122041773@upq.edu.mx"},
@@ -19,6 +20,17 @@ usuarios=[
 @app.get('/',tags=['Inicio'])
 def home():
 	return {'hello':'Hello FastAPI!'}
+
+#EndPoint para generar Token
+@app.get('/auth',tags=['autentificacion'])
+def auth(credenciales: modelAuth):
+    if credenciales.mail == 'carlosexample.com' and credenciales.passw == '123456789':
+        token: str= createToken(credenciales.model_dump())
+        print(token)
+        return {"Aviso": "Token Generado"}
+    else:
+        return {"Aviso": "Usuario no cuenta con permisos"}
+
 
 #EndPoint Consulta todos
 @app.get('/todosusuarios', response_model=List[modelUsuario], tags=['Operaciones CRUD'])
