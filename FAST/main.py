@@ -22,9 +22,9 @@ def home():
 	return {'hello':'Hello FastAPI!'}
 
 #EndPoint para generar Token
-@app.get('/auth',tags=['autentificacion'])
+@app.post('/auth',tags=['autentificacion'])
 def auth(credenciales: modelAuth):
-    if credenciales.mail == 'carlosexample.com' and credenciales.passw == '123456789':
+    if credenciales.mail == 'carlos@example.com' and credenciales.passw == '123456789':
         token: str= createToken(credenciales.model_dump())
         print(token)
         return {"Aviso": "Token Generado"}
