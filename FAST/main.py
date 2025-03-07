@@ -1,7 +1,9 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Depends
+from fastapi.responses import JSONResponse
 from typing import Optional, List
 from models import modelUsuario, modelAuth
 from gentoken import createToken
+from middlewares import BearerJWT
 
 app = FastAPI(
     title="Mi primer API",
@@ -27,13 +29,13 @@ def auth(credenciales: modelAuth):
     if credenciales.mail == 'carlos@example.com' and credenciales.passw == '123456789':
         token: str= createToken(credenciales.model_dump())
         print(token)
-        return {"Aviso": "Token Generado"}
+        return JSONResponse(content={"token": token})
     else:
         return {"Aviso": "Usuario no cuenta con permisos"}
 
 
-#EndPoint Consulta todos
-@app.get('/todosusuarios', response_model=List[modelUsuario], tags=['Operaciones CRUD'])
+#EndPoint CONSULTA TODOS
+@app.get('/todosUsuarios', dependencies=[Depends(BearerJWT())], response_model=List[modelUsuario], tags=['Operaciones CRUD'])
 def leer():
 	return usuarios
 
