@@ -1,15 +1,21 @@
 from fastapi import FastAPI, HTTPException, Depends
 from fastapi.responses import JSONResponse
+from fastapi.encoders import jsonable_encoder
 from typing import Optional, List
-from FAST.modelsPydantic import modelUsuario, modelAuth
+from modelsPydantic import modelUsuario, modelAuth
 from gentoken import createToken
 from middlewares import BearerJWT
+from DB.conexion import Session,engine,Base
+from models.modelsDB import User
 
 app = FastAPI(
-    title="Mi primer API",
+    title="Mi primer API 194",
     description="Carlos Hernández Méndez",
     version="1.0.1"
-)    
+)   
+
+Base.metadata.create_all(bind=engine)
+ 
 usuarios=[
 	{"id":1,"nombre":"carlos", "edad":20, "correo":"carlos@example.com"},
 	{"id":2,"nombre":"Paulina", "edad":24, "correo":"122041771@upq.edu.mx"},
@@ -35,19 +41,58 @@ def auth(credenciales: modelAuth):
 
 
 #EndPoint CONSULTA TODOS
-@app.get('/todosUsuarios', dependencies=[Depends(BearerJWT())], response_model=List[modelUsuario], tags=['Operaciones CRUD'])
+@app.get('/todosUsuarios',tags=['Operaciones CRUD'])
 def leer():
-	return usuarios
+    db=Session()
+    try:
+        consulta = db.query(User).all()
+        return JSONResponse(content=jsonable_encoder(consulta))
+    
+    except Exception as e:
+        db.rollback()
+        return JSONResponse(status_code=500,
+                            content={"message":"No fue posible Guardar ",
+                                     "Error": str(e)})
+    finally:
+        db.close()
+    
+@app.get('/usuarios/{id}',tags=['Operaciones CRUD'])
+def leeruno(id: int):
+    db=Session()
+    try:
+        consulta = db.query(User).filter(User.id==id).first()
+        if not consulta:
+            return JSONResponse(status_code=404,
+                                content={"message":"Usuario no encontrado"})
+        return JSONResponse(content=jsonable_encoder(consulta))
+    
+    except Exception as e:
+        db.rollback()
+        return JSONResponse(status_code=500,
+                            content={"message":"No fue posible Guardar ",
+                                     "Error": str(e)})
+    finally:
+        db.close()
 
 #EndPoint para post
 @app.post('/Usuarios/',response_model=modelUsuario,tags=['Operaciones CRUD'])
 def guardar(usuario:modelUsuario):
-    for usr in usuarios:
-            if usr ["id"] == usuario.id:
-                raise  HTTPException(status_code=400,detail="El usuario ya existe")
+    db=Session()
+    try:
+        db.add(User(**usuario.model_dump()))
+        db.commit()
+        return JSONResponse(status_code=201,
+                            content={"message":"Usuario Guardado ",
+                                     "usuario": usuario.model_dump()})
     
-    usuarios.append(usuario)
-    return usuario 
+    except Exception as e:
+        db.rollback()
+        return JSONResponse(status_code=500,
+                            content={"message":"No fue posible Guardar ",
+                                     "Error": str(e)})
+        
+    finally:
+        db.close()
 
 #EndPoint para actualizar
 @app.put('/Usuarios/{id}',response_model=modelUsuario,tags=['Operaciones CRUD'])
