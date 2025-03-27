@@ -95,20 +95,47 @@ def guardar(usuario:modelUsuario):
         db.close()
 
 #EndPoint para actualizar
-@app.put('/Usuarios/{id}',response_model=modelUsuario,tags=['Operaciones CRUD'])
-def actualizar(id:int,usuarioActualizado:modelUsuario):
-    for index, usr in enumerate(usuarios):
-        if usr["id"] == id:
-            usuarios[index]=usuarioActualizado.model_dump()
-            return usuarios[index]
-    
-    raise HTTPException(status_code=400,detail="El usuario no existe")
+@app.put('/Usuarios/{id}', response_model=modelUsuario, tags=['Operaciones CRUD'])
+def actualizar(id: int, usuarioActualizado: modelUsuario):
+    db = Session()
+    try:
+        usuario = db.query(User).filter(User.id == id).first()
+        if not usuario:
+            raise HTTPException(status_code=404, detail="El usuario no existe")
+        
+        for key, value in usuarioActualizado.model_dump().items():
+            setattr(usuario, key, value)
+        
+        db.commit() 
+        return usuarioActualizado.model_dump()  
 
-@app.delete('/Usuarios/{id}',tags=['Operaciones CRUD'])
-def eliminar(id:int):
-    for index, usr in enumerate(usuarios):
-        if usr["id"] == id:
-            usuarios.pop(index)
-            return usuarios[index]
+    except Exception as e:
+        db.rollback()  
+        return JSONResponse(status_code=500,
+                            content={"message": "No fue posible actualizar el usuario",
+                                     "Error": str(e)})
     
-    raise HTTPException(status_code=400,detail="El usuario no existe")
+    finally:
+        db.close()  
+
+@app.delete('/Usuarios/{id}', tags=['Operaciones CRUD'])
+def eliminar(id: int):
+    db = Session()
+    try:
+        
+        usuario = db.query(User).filter(User.id == id).first()
+        if not usuario:
+            raise HTTPException(status_code=404, detail="El usuario no existe")
+        
+        db.delete(usuario)
+        db.commit()  
+        return JSONResponse(status_code=200, content={"message": "Usuario eliminado exitosamente"})
+
+    except Exception as e:
+        db.rollback()  
+        return JSONResponse(status_code=500,
+                            content={"message": "No fue posible eliminar el usuario",
+                                     "Error": str(e)})
+    
+    finally:
+        db.close()
